@@ -1,7 +1,7 @@
-import Adafruit_DHT
 import RPi.GPIO as GPIO
+import Adafruit_DHT
+import sqlite3
 import time
-
 
 
 ## Sensor Feuchtigkeit + Temperatur
@@ -26,9 +26,6 @@ else:
 
 ## Lüftersteuerung
 
-import Adafruit_DHT
-import RPi.GPIO as GPIO
-import time
 
 # Sensor konfigurieren
 sensor = Adafruit_DHT.DHT22
@@ -57,22 +54,40 @@ def control_fan(temperature, humidity):
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(fan_pin, GPIO.OUT)
 
+
+# Sensor konfigurieren
+sensor = Adafruit_DHT.DHT22
+sensor_pin = 4  # GPIO-Pin, an den der Sensor angeschlossen ist
+
+# Datenbank erstellen und Verbindung herstellen
+conn = sqlite3.connect('sensor_data.db')
+cursor = conn.cursor()
+
+# Datenbanktabelle erstellen, falls sie nicht vorhanden ist
+cursor.execute('''CREATE TABLE IF NOT EXISTS sensor_data
+                  (timestamp DATETIME, temperature NUMERIC, humidity NUMERIC)''')
+conn.commit()
+
 try:
     while True:
         # Sensorwerte auslesen
         humidity, temperature = Adafruit_DHT.read_retry(sensor, sensor_pin)
 
         if humidity is not None and temperature is not None:
-            # Lüfter steuern basierend auf den aktuellen Sensorwerten
-            control_fan(temperature, humidity)
-            print(f'Temperatur: {temperature:.2f}°C, Luftfeuchtigkeit: {humidity:.2f}%, Lüftergeschwindigkeit: {fan_speed}%')
+            # Aktuelles Datum und Uhrzeit abrufen
+            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+
+            # Daten in die Datenbank einfügen
+            cursor.execute("INSERT INTO sensor_data (timestamp, temperature, humidity) VALUES (?, ?, ?)",
+                           (timestamp, temperature, humidity))
+            conn.commit()
+
+            print(f'Temperatur: {temperature:.2f}°C, Luftfeuchtigkeit: {humidity:.2f}%, Zeitstempel: {timestamp}')
         else:
             print('Fehler beim Auslesen des Sensors')
 
-        time.sleep(180)  # Alle 180 Sekunden aktualisieren
+        time.sleep(60)  # Alle 60 Sekunden aktualisieren
 
 except KeyboardInterrupt:
-    pass
-
-# GPIO aufräumen
-GPIO.cleanup()
+    print("Programm beendet.")
+    conn.close()
