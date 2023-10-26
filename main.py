@@ -36,11 +36,11 @@ sensor_pin = 4  # GPIO-Pin, an den der Sensor angeschlossen ist
 
 # Lüfter konfigurieren
 fan_pin = 18  # GPIO-Pin, an den der Lüfter angeschlossen ist
-fan_speed = 40  # Anfangsgeschwindigkeit der Lüfter (0-100%)
+fan_speed = 60 # Anfangsgeschwindigkeit der Lüfter (0-100%)
 
 # Temperatur- und Luftfeuchtigkeitsgrenzwerte für den Lüfterbetrieb
 temperature_threshold = 25.0  # in Grad Celsius
-humidity_threshold = 60.0  # in Prozent
+humidity_threshold = 65.0  # in Prozent
 
 # Lüftersteuerungsfunktion
 def control_fan(temperature, humidity):
@@ -50,7 +50,7 @@ def control_fan(temperature, humidity):
         GPIO.output(fan_pin, GPIO.HIGH)
     else:
         # Andernfalls schalte den Lüfter aus
-        fan_speed = 0
+        fan_speed = 60
         GPIO.output(fan_pin, GPIO.LOW)
 
 # GPIO initialisieren
@@ -69,7 +69,7 @@ try:
         else:
             print('Fehler beim Auslesen des Sensors')
 
-        time.sleep(60)  # Alle 60 Sekunden aktualisieren
+        time.sleep(180)  # Alle 180 Sekunden aktualisieren
 
 except KeyboardInterrupt:
     pass
